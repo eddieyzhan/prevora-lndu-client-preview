@@ -1,3 +1,3 @@
-# Prevora / LNDU client preview
+# PREVORA Australian client preview
 
-English-language storefront demonstration with sample Australian-dollar prices. Shopping, checkout and enquiries are local simulations; no orders, payments or messages are submitted. Product imagery is sourced from the official LNDU website for this authorised client preview.
+Four brand destinations: LNDU, AZDOME, Aiio (name and range awaiting confirmation), and ARPHA. English-language storefront demonstration with explicitly labelled sample Australian-dollar prices. Shopping, checkout and enquiries are local simulations; no orders, payments or messages are submitted. Product information and imagery are sourced from official LNDU, AZDOME and ARPHA websites for this authorised client preview. The selected models demonstrate the journey and are not a confirmed Australian assortment. Australian brand domains and live store arrangements are still to be confirmed.
