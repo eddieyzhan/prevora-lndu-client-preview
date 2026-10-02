@@ -42,12 +42,15 @@
   const brandFor = p => brandInfo(p.brand);
   const THEME_MODE = Boolean(window.PREVORA_THEME_MODE);
   const ROOT_URL = window.PREVORA_ROOT || './';
+  // Carry the published script revision to entry pages so navigation avoids stale HTML.
+  const ENTRY_VERSION = document.currentScript?.src ? new URL(document.currentScript.src).searchParams.get('v') : null;
+  const ENTRY_QUERY = ENTRY_VERSION ? `?revision=${encodeURIComponent(ENTRY_VERSION)}` : '';
   let activeBrand = brandInfo(window.PREVORA_BRAND) || null;
   let cartKey = '';
   const rangeProducts = () => activeBrand ? brandProducts(activeBrand.id) : PRODUCTS;
   const rangeCategories = () => CATEGORIES.filter(c => rangeProducts().some(p => p.category === c.id));
-  const brandHref = (id, route='#/') => THEME_MODE ? `#/store/${id}/${route.replace(/^#\//,'')}` : `${ROOT_URL}${id}/${route === '#/' ? '' : route}`;
-  const prevoraHref = () => THEME_MODE ? '#/' : `${ROOT_URL}#/`;
+  const brandHref = (id, route='#/') => THEME_MODE ? `#/store/${id}/${route.replace(/^#\//,'')}` : `${ROOT_URL}${id}/${ENTRY_QUERY}${route === '#/' ? '' : route}`;
+  const prevoraHref = () => THEME_MODE ? '#/' : `${ROOT_URL}${ENTRY_QUERY}#/`;
   const storeRoute = path => THEME_MODE && activeBrand && path.startsWith('#/') && !path.startsWith('#/store/') ? `#/store/${activeBrand.id}/${path.slice(2)}` : path;
   const brandProducts = id => PRODUCTS.filter(p=>String(p.brand).toLowerCase()===id);
   const brandShopHref = (id,cat='') => `#/shop${cat?'/'+cat:''}?brand=${id}`;
