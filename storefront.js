@@ -44,10 +44,10 @@
   const brandShopHref = (id,cat='') => `#/shop${cat?'/'+cat:''}?brand=${id}`;
   const brandPicture = b => brandProducts(b.id)[0]?.images[0];
   const CATEGORIES = [
-    {id:'locks',name:'Smart locks',intro:'A smarter welcome home.',description:'Explore fingerprint, passcode and video entry options. Find the right fit for your front door.',image:'lndu-h10-product.png',sub:'Make an entrance',count:3},
+    {id:'locks',name:'Smart locks',intro:'A smarter welcome home.',description:'Explore smart entry options and compare access methods. Find the right fit for your front door.',image:'lndu-h10-product.png',sub:'Make an entrance',count:3},
     {id:'doorbells',name:'Video doorbells',intro:'See who’s stopping by.',description:'Bring a clearer view to your doorstep. Discover connected video doorbells across our preview ranges.',image:'lndu-dl100-product.png',sub:'A clearer view at the door',count:1},
     {id:'cameras',name:'Security cameras',intro:'Keep the everyday in view.',description:'Discover cameras with detailed video, night vision and flexible storage options.',image:'lndu-cl05-product.png',sub:'Keep an eye on your space',count:1},
-    {id:'dashcams',name:'Dash cameras',intro:'Ready for the road ahead.',description:'Explore front-and-rear recording and mirror cameras that put every journey in focus.',image:'lndu-v820-product.png',sub:'Every journey in focus',count:2},
+    {id:'dashcams',name:'Dash cameras',intro:'Ready for the road ahead.',description:'Explore recording setups that put every journey in focus. Compare camera coverage and features for the road ahead.',image:'lndu-v820-product.png',sub:'Every journey in focus',count:2},
     {id:'outdoor',name:'Outdoor living',intro:'A little closer to nature.',description:'Bring the garden into focus with LNDU’s connected bird feeder.',image:'lndu-bf05-product.png',sub:'Discover your garden visitors',count:1}
   ];
   const money = n => new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD',minimumFractionDigits:0,maximumFractionDigits:0}).format(n);
