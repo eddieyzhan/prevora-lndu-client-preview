@@ -1,7 +1,33 @@
 (() => {
   'use strict';
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-  let selection = [], products = [], recipient = '', draft = '';
+  let selection = [], products = [], recipient = '', draft = '', prepared = null;
+  const nativeForm = document.getElementById('PrevoraEnquiry');
+  const parking = document.getElementById('prevora-enquiry-parking');
+  const result = nativeForm?.querySelector('[data-enquiry-result]');
+  if (result) {
+    const resultHost = document.getElementById('prevora-enquiry-result');
+    resultHost.append(result); resultHost.hidden = false;
+    result.classList.add('demo-callout');
+    result.focus();
+  }
+  function attachNativeForm() {
+    if (!nativeForm) return;
+    const slot = document.getElementById('quote-native-slot');
+    const destination = slot || parking;
+    if (nativeForm.parentElement !== destination) destination.append(nativeForm);
+  }
+  if (nativeForm) {
+    new MutationObserver(attachNativeForm).observe(document.getElementById('app'), {childList:true, subtree:true});
+    nativeForm.addEventListener('submit', event => {
+      if (!prepared || !draft || !validEmail(prepared.email)) {
+        event.preventDefault();
+        nativeForm.querySelector('[data-enquiry-progress]').textContent = 'Review your enquiry before sending it.';
+        return;
+      }
+      nativeForm.querySelector('[data-enquiry-progress]').textContent = 'Submitting your enquiry. Complete any security check shown by Shopify.';
+    });
+  }
   const name = p => p.name || p.title;
   const key = p => p.id;
   const validEmail = value => /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(value);
@@ -13,10 +39,11 @@
     </div>`).join('');
   }
   function render(catalog, options = {}) {
-    products = catalog; recipient = validEmail(options.email || '') ? options.email : ''; draft = '';
+    products = catalog; recipient = validEmail(options.email || '') ? options.email : ''; draft = ''; prepared = null;
+    if (nativeForm) parking.append(nativeForm);
     selection = selection.filter(line => line.id === 'other' || products.some(p => key(p) === line.id));
     if (!selection.length) selection = [{ id: '', quantity: 1 }];
-    return `<section class="container quote-builder"><div class="page-head"><p class="eyebrow">PREVORA / Business enquiries</p><h1>Tell us what you need.</h1><p>Choose products and quantities, add your project details, then review your enquiry.</p></div><div class="contact-layout"><div class="contact-copy"><h2>Start with your project.</h2><p>Request a quote for a property, workplace, resale range or larger order. Prices, supply and trade terms are agreed in the quote.</p><p>For a model that is not listed, choose "Another model / help me choose" and describe it in your message.</p><div class="demo-callout">${options.preview ? 'The listed models come from the supplied Australian product workbook. The launch selection is awaiting approval. ' : ''}${recipient ? 'Review your draft, then open your email app to send it.' : 'The enquiry inbox is being set up. You can prepare and download your draft now.'} Nothing is sent automatically.</div></div><div>
+    return `<section class="container quote-builder"><div class="page-head"><p class="eyebrow">PREVORA / Business enquiries</p><h1>Tell us what you need.</h1><p>Choose products and quantities, add your project details, then review your enquiry.</p></div><div class="contact-layout"><div class="contact-copy"><h2>Start with your project.</h2><p>Request a quote for a property, workplace, resale range or larger order. Prices, supply and trade terms are agreed in the quote.</p><p>For a model that is not listed, choose "Another model / help me choose" and describe it in your message.</p><div class="demo-callout">${options.preview ? 'The listed models come from the supplied Australian product workbook. The launch selection is awaiting approval. ' : ''}${nativeForm ? 'Review your enquiry, then select Send enquiry to submit it to PREVORA.' : recipient ? 'Review your draft, then open your email app to send it. Nothing is sent automatically from this preview.' : 'The enquiry inbox is being set up. You can prepare and download your draft now.'}</div></div><div>
       <form id="quote-form"><div class="field-grid">
         <label class="field">Your name<input name="name" maxlength="160" autocomplete="name" required></label>
         <label class="field">Email<input type="email" name="email" maxlength="254" autocomplete="email" required></label>
@@ -25,13 +52,14 @@
         <label class="field">Delivery postcode (optional)<input name="postcode" inputmode="numeric" pattern="[0-9]{4}" maxlength="4"></label>
       </div><h2 class="quote-products-heading">Products and quantities</h2><div id="quote-lines">${lines()}</div><button type="button" class="text-link" data-quote-add>Add another product +</button>
       <label class="field quote-message">Project details / other models<textarea name="message" maxlength="4000" placeholder="Installation needs, preferred models, quantities and timing" required></textarea></label>
-      <p class="demo-note">Your contact details stay in this page until you download the draft or open your email app. They are not saved in browser storage.</p><button class="button" type="submit">Review enquiry</button></form>
-      <section id="quote-review" hidden tabindex="-1"><h2>Review your enquiry.</h2><textarea id="quote-draft" readonly rows="16" aria-label="Enquiry draft"></textarea><div class="quote-actions"><button class="button" type="button" data-quote-download>Download draft</button>${recipient ? '<a class="button button-outline" id="quote-email">Open email draft</a>' : ''}<button class="text-link" type="button" data-quote-edit>Edit details</button></div><p id="quote-delivery-note" role="status">Your enquiry has not been sent. ${recipient ? 'Review and send it in your email app.' : 'Share the downloaded draft once your PREVORA contact is confirmed.'}</p></section>
+      <p id="quote-validation" role="alert"></p><p class="demo-note">${nativeForm ? 'Your details are sent to PREVORA through Shopify only when you select Send enquiry.' : 'Your details stay in this page until you download the draft or open your email app.'} They are not saved in browser storage.</p><button class="button" type="submit">Review enquiry</button></form>
+      <section id="quote-review" hidden tabindex="-1"><h2>Review your enquiry.</h2><textarea id="quote-draft" readonly rows="16" aria-label="Enquiry draft"></textarea>${nativeForm ? '<div id="quote-native-slot"></div>' : ''}<div class="quote-actions"><button class="button" type="button" data-quote-download>Download draft</button>${recipient ? '<a class="button button-outline" id="quote-email">Open email draft</a>' : ''}<button class="text-link" type="button" data-quote-edit>Edit details</button></div><p id="quote-delivery-note" role="status">Your enquiry has not been sent. ${nativeForm ? 'Select Send enquiry above, or use an email draft instead.' : recipient ? 'Review and send it in your email app.' : 'Share the downloaded draft once your PREVORA contact is confirmed.'}</p></section>
     </div></div></section>`;
   }
   function add(id, quantity = 1) {
     const found = selection.find(line => line.id === id);
-    if (found) found.quantity += quantity; else selection.push({ id, quantity });
+    if (!Number.isInteger(quantity) || quantity < 1) return;
+    if (found) found.quantity = Math.min(100000, found.quantity + quantity); else selection.push({ id, quantity: Math.min(100000, quantity) });
   }
   document.addEventListener('change', event => {
     const el = event.target;
@@ -42,7 +70,7 @@
     const el = event.target.closest('button,a'); if (!el) return;
     if (el.hasAttribute('data-quote-add')) { selection.push({ id: '', quantity: 1 }); document.getElementById('quote-lines').innerHTML = lines(); }
     if (el.hasAttribute('data-quote-remove')) { selection.splice(Number(el.dataset.quoteRemove), 1); if (!selection.length) selection.push({ id: '', quantity: 1 }); document.getElementById('quote-lines').innerHTML = lines(); }
-    if (el.hasAttribute('data-quote-edit')) { document.getElementById('quote-review').hidden = true; document.getElementById('quote-form').hidden = false; document.querySelector('#quote-form input').focus(); }
+    if (el.hasAttribute('data-quote-edit')) { prepared = null; document.getElementById('quote-review').hidden = true; document.getElementById('quote-form').hidden = false; document.querySelector('#quote-form input').focus(); }
     if (el.hasAttribute('data-quote-download')) {
       const url = URL.createObjectURL(new Blob([draft], { type: 'text/plain;charset=utf-8' }));
       const link = document.createElement('a'); link.href = url; link.download = 'prevora-quote-enquiry.txt'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -52,19 +80,32 @@
     if (event.target.id !== 'quote-form') return;
     event.preventDefault();
     if (!event.target.reportValidity()) return;
-    const fields = Object.fromEntries(new FormData(event.target));
+    const fields = Object.fromEntries([...new FormData(event.target)].map(([k,v]) => [k, String(v).trim()]));
+    if (!fields.name || !fields.company || !fields.message || !validEmail(fields.email)) { document.getElementById('quote-validation').textContent = 'Enter your name, email, company or project, and a short message. Blank spaces do not count.'; return; }
+    document.getElementById('quote-validation').textContent = '';
     if (!selection.length || selection.some(line => !line.id || !Number.isInteger(line.quantity) || line.quantity < 1 || line.quantity > 100000)) return;
     draft = ['PREVORA - quote enquiry', '', `Name: ${fields.name}`, `Email: ${fields.email}`, `Company / project: ${fields.company}`, `Phone: ${fields.phone || 'Not supplied'}`, `Delivery postcode: ${fields.postcode || 'Not supplied'}`, '', 'Products requested:', ...selection.map(line => {
       const product = products.find(p => key(p) === line.id);
       return `- ${product ? name(product) : 'Other model / advice requested'} | Quantity: ${line.quantity}`;
     }), '', 'Project details:', fields.message, '', 'This is a quote request, not an order. Prices, stock, shipping and trade terms require confirmation.'].join('\n');
     document.getElementById('quote-draft').value = draft;
+    prepared = fields;
+    if (nativeForm) {
+      nativeForm.elements.namedItem('contact[name]').value = fields.name;
+      nativeForm.elements.namedItem('contact[email]').value = fields.email;
+      nativeForm.elements.namedItem('contact[body]').value = draft;
+      nativeForm.querySelector('[data-enquiry-progress]').textContent = '';
+      attachNativeForm();
+    }
+    document.getElementById('quote-delivery-note').textContent = nativeForm
+      ? 'Your enquiry has not been sent. Select Send enquiry above, or use an email draft instead.'
+      : recipient ? 'Your enquiry has not been sent. Review and send it in your email app.' : 'Your enquiry has not been sent.';
     const email = document.getElementById('quote-email');
     if (email) {
       const href = `mailto:${recipient}?subject=${encodeURIComponent('PREVORA quote enquiry - ' + fields.company)}&body=${encodeURIComponent(draft)}`;
       email.hidden = href.length > 1900;
       if (!email.hidden) email.href = href;
-      else document.getElementById('quote-delivery-note').textContent = 'Your draft is too long for an email link. Download it and attach it to your email. Nothing has been sent.';
+      else document.getElementById('quote-delivery-note').textContent = nativeForm ? 'Your enquiry has not been sent. Select Send enquiry, or download this longer draft to attach to an email.' : 'Your draft is too long for an email link. Download it and attach it to your email. Nothing has been sent.';
     }
     event.target.hidden = true; const review = document.getElementById('quote-review'); review.hidden = false; review.focus();
   });

@@ -21,7 +21,11 @@
     const corporateHref = themed ? '#/' : root + 'index.html';
     const products = () => (client?.products || []).filter(p => !brand || p.brand === brand.id);
     const firstVariant = p => p.variants.find(v => v.availableForSale) || p.variants[0];
-    const picture = (p, cls = '') => p.images?.[0] ? `<img class="${cls}" src="${safeUrl(p.images[0].url)}" alt="${esc(p.images[0].altText || p.title)}" loading="lazy">` : '<span class="image-pending">Product image to follow</span>';
+    const imageTag = (im, title, lazy = true) => {
+      const dimensions = Number.isInteger(im.width) && Number.isInteger(im.height) && im.width > 0 && im.height > 0 ? ` width="${im.width}" height="${im.height}"` : '';
+      return `<img src="${safeUrl(im.url)}" alt="${esc(im.altText?.trim() || title)}"${dimensions} ${lazy ? 'loading="lazy"' : 'fetchpriority="high"'}>`;
+    };
+    const picture = p => p.images?.[0] ? imageTag(p.images[0], p.title) : '<span class="image-pending">Product image to follow</span>';
     const productHref = p => brand ? href('product/' + p.handle) : `${brandHref(p.brand)}${themed ? 'product/' : '#/product/'}${p.handle}`;
     function header() {
       return `<a class="skip-link" href="#main-content">Skip to content</a><div class="preview-bar">Connected store test - launch review pending</div><header class="site-header"><div class="container header-inner"><a class="${brand ? 'store-home-link' : 'wordmark'}" href="${href('')}">${brand ? `<img class="store-logo" src="${assets + brand.logo}" alt="${brand.name}">` : 'prevora.'}</a><nav class="live-nav" aria-label="Main navigation"><a href="${href('shop')}">Products</a><a href="${href('business')}">Request a quote</a><a href="${href('support')}">Support</a>${brand ? `<a href="${href('cart')}">Bag (${client?.cart?.totalQuantity || 0})</a><a href="${corporateHref}">PREVORA</a>` : ''}</nav></div></header>`;
@@ -46,7 +50,10 @@
       if (!p || !brand) return missing();
       const v = p.variants.find(v => v.id === chosenVariant) || firstVariant(p);
       chosenVariant = v?.id || '';
-      return `<section class="container section"><a class="text-link" href="${href('shop')}">Back to products</a><div class="product-layout"><div class="product-gallery"><div class="gallery-main">${picture(p)}</div><div class="live-gallery">${p.images.slice(1).map(im => `<img src="${safeUrl(im.url)}" alt="${esc(im.altText || p.title)}" loading="lazy">`).join('')}</div></div><div class="product-details"><p class="product-brand">${esc(p.vendor)}</p><h1>${esc(p.title)}</h1><p class="product-price">${v ? money(v.price.amount) + ' AUD' : 'No options available'}</p><p class="live-description">${esc(p.description)}</p><form id="live-add"><label class="field">Option<select name="variant" id="live-variant">${p.variants.map(option => `<option value="${esc(option.id)}" ${option.id === v?.id ? 'selected' : ''}>${esc(option.title === 'Default Title' ? 'Standard' : option.title)}${option.availableForSale ? '' : ' - Unavailable'}</option>`).join('')}</select></label><p>${v?.sku ? 'SKU: ' + esc(v.sku) : ''}</p><label class="field">Quantity<input name="quantity" type="number" min="1" max="99" step="1" value="1" required></label><button class="button" type="submit" ${v?.availableForSale ? '' : 'disabled'}>${v?.availableForSale ? 'Add to bag' : 'Currently unavailable'}</button></form><button class="text-link quote-product-button" data-live-quote="${esc(p.id)}">Request a quote for this product</button></div></div></section>`;
+      const primary = p.images?.[0];
+      const mediaWidth = Math.round(Math.min(520, Math.max(260, (primary?.width || 472) * Math.min(1, 400 / (primary?.height || 400)) + 48)));
+      const mainImage = primary ? `<a class="gallery-main" href="${safeUrl(primary.url)}" target="_blank" rel="noopener" aria-label="Open ${esc(p.title)} image at full size">${imageTag(primary, p.title, false)}</a>` : '<div class="gallery-main"><span class="image-pending">Product image to follow</span></div>';
+      return `<section class="container section"><a class="text-link" href="${href('shop')}">Back to products</a><div class="product-layout" style="--live-media-column:${mediaWidth}px"><div class="product-gallery">${mainImage}<div class="live-gallery">${p.images.slice(1).map((im, i) => `<a href="${safeUrl(im.url)}" target="_blank" rel="noopener" aria-label="Open ${esc(p.title)} image ${i + 2} at full size">${imageTag(im, p.title)}</a>`).join('')}</div>${primary ? '<p class="live-image-hint">Select an image to view it in full.</p>' : ''}</div><div class="product-details"><p class="product-brand">${esc(p.vendor)}</p><h1>${esc(p.title)}</h1><p class="product-price">${v ? money(v.price.amount) + ' AUD' : 'No options available'}</p><p class="live-description">${esc(p.description)}</p><form id="live-add"><label class="field">Option<select name="variant" id="live-variant">${p.variants.map(option => `<option value="${esc(option.id)}" ${option.id === v?.id ? 'selected' : ''}>${esc(option.title === 'Default Title' ? 'Standard' : option.title)}${option.availableForSale ? '' : ' - Unavailable'}</option>`).join('')}</select></label><p>${v?.sku ? 'SKU: ' + esc(v.sku) : ''}</p><label class="field">Quantity<input name="quantity" type="number" min="1" max="99" step="1" value="1" required></label><button class="button" type="submit" ${v?.availableForSale ? '' : 'disabled'}>${v?.availableForSale ? 'Add to bag' : 'Currently unavailable'}</button></form><button class="text-link quote-product-button" data-live-quote="${esc(p.id)}">Request a quote for this product</button></div></div></section>`;
     }
     function bag() {
       if (!brand) return `<section class="container section"><h1>Choose a brand to shop.</h1>${brands.map(b => `<p><a href="${brandHref(b.id)}">${b.name}</a></p>`).join('')}</section>`;
@@ -80,12 +87,12 @@
     function notice(text) {
       message = text;
       const el = document.getElementById('live-message');
-      if (el) { el.innerHTML = `<div class="demo-callout">${esc(text)}</div>`; el.focus(); }
+      if (el) { el.innerHTML = `<div class="demo-callout">${esc(text)} <button class="text-link" data-live-refresh>Retry / refresh</button></div>`; el.focus(); }
     }
     async function action(work) {
       if (busy) return;
       busy = true; app.setAttribute('aria-busy', 'true');
-      app.querySelectorAll('button').forEach(button => { button.dataset.wasDisabled = String(button.disabled); button.disabled = true; });
+      app.querySelectorAll('button,input[data-live-line],#live-variant').forEach(control => { control.dataset.wasDisabled = String(control.disabled); control.disabled = true; });
       try { await work(); }
       catch (error) {
         message = error.message || 'Unable to connect. Please try again.';
@@ -94,7 +101,7 @@
       }
       finally {
         busy = false; app.removeAttribute('aria-busy');
-        app.querySelectorAll('button[data-was-disabled]').forEach(button => { button.disabled = button.dataset.wasDisabled === 'true'; delete button.dataset.wasDisabled; });
+        app.querySelectorAll('[data-was-disabled]').forEach(control => { control.disabled = control.dataset.wasDisabled === 'true'; delete control.dataset.wasDisabled; });
         if (pendingRoute) { pendingRoute = false; await navigate(); }
       }
     }

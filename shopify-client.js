@@ -2,9 +2,9 @@
 (() => {
   'use strict';
   const variantFields = `id title sku availableForSale price { amount currencyCode }
-    selectedOptions { name value } image { url altText }`;
+    selectedOptions { name value } image { url altText width height }`;
   const productFields = `id handle title description vendor productType tags
-    images(first: 20) { nodes { url altText } }
+    images(first: 20) { nodes { url altText width height } }
     variants(first: 100) { nodes { ${variantFields} } pageInfo { hasNextPage endCursor } }`;
   const cartFields = `id checkoutUrl totalQuantity attributes { key value }
     cost { subtotalAmount { amount currencyCode } totalAmount { amount currencyCode } }
@@ -21,7 +21,7 @@
       if (config.country !== 'AU' || config.currency !== 'AUD') throw new Error('This storefront requires the Australian market and AUD.');
       for (const brand of brands) if (!/^[a-z0-9-]+$/.test(config.collections?.[brand] || '')) throw new Error(`Set the ${brand} launch collection handle.`);
       if (new Set(Object.values(config.collections)).size !== 3) throw new Error('Each brand needs a separate launch collection.');
-      this.config = config; this.fetcher = fetcher; this.storage = storage;
+      this.config = config; this.fetcher = fetcher.bind(globalThis); this.storage = storage;
       this.products = []; this.cart = null; this.brand = null; this.warnings = [];
     }
     async request(query, variables = {}) {
