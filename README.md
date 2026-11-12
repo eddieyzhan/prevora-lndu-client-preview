@@ -1,3 +1,3 @@
-# PREVORA Australian client preview
+# PREVORA Australian range review
 
-PREVORA links to four distinct brand storefront demos: LNDU, AZDOME, Aiio (name and range awaiting confirmation), and ARPHA. Shared brand URLs also open directly without a prior PREVORA visit. Each confirmed range has its own navigation, product collection, demo bag and simulated checkout. English-language content with explicitly labelled sample AUD prices. No orders, payments or enquiries are submitted. Product information and original imagery come from the official manufacturer websites. Selected models are preview examples, not a confirmed Australian assortment. The four demo URLs are subdirectories; registered Australian domains and live commerce remain to be connected.
+LNDU, Aviio and AZDOME. Supplied product drafts with direct URLs, specifications and images. Prices, stock and launch selection need approval. No live orders. The quote builder prepares an email draft or text download; it does not send automatically.
